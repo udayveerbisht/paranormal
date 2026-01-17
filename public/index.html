@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rewriter</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #050505;
+            /* deeper page black */
+            color: #e5e5e5;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 280px;
+            background: #0d0d0d;
+            /* lighter than body */
+            color: #e5e5e5;
+            border: none;
+            border-radius: 22px;
+            padding: 14px;
+            font-size: 14px;
+            line-height: 1.55;
+            outline: none;
+            resize: none;
+        }
+
+        textarea::placeholder {
+            color: #777;
+        }
+
+        textarea:focus {
+            background: #0f0f0f;
+        }
+
+        button {
+            padding: 10px 16px;
+            font-size: 14px;
+            background: #101010;
+            /* slightly lighter than textarea */
+            color: #e5e5e5;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #131313;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* mobile stack */
+        @media (max-width: 760px) {
+            .editor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <div class="row-top">
+            <button id="rewrite">Rewrite</button>
+            <span id="status" class="status"></span>
+        </div>
+
+        <div class="editor-grid">
+            <textarea id="input" placeholder="Paste your text here"></textarea>
+            <textarea id="output" placeholder="Rewritten text will appear here" readonly></textarea>
+        </div>
+
+    </div>
+
+    <script>
+        const input = document.getElementById("input");
+        const output = document.getElementById("output");
+        const btn = document.getElementById("rewrite");
+        const statusEl = document.getElementById("status");
+
+        btn.onclick = async () => {
+            const text = input.value.trim();
+            if (!text) return;
+
+            btn.disabled = true;
+            statusEl.textContent = "Rewriting...";
+
+            try {
+                const r = await fetch("/rewrite", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text })
+                });
+
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error();
+
+                output.value = String(j.text || "").trim();
+                statusEl.textContent = "";
+            } catch {
+                statusEl.textContent = "Error";
+            } finally {
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+
+</html>
